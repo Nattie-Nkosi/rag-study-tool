@@ -10,9 +10,11 @@ export type RetrievalState =
 export default function InspectorPane({
   doc,
   retrieval,
+  flash,
 }: {
   doc: UploadResponse | null;
   retrieval: RetrievalState;
+  flash: number;
 }) {
   const records = doc ? doc.chunk_count.toLocaleString() : "0";
 
@@ -38,14 +40,14 @@ export default function InspectorPane({
           </div>
         ) : (
           <div className="dashed scrollbar">
-            <div className="records">
+            <div className="records" key={flash}>
               <div className="records-query">
                 query: <b>{retrieval.query}</b>
                 {"  →  "}
                 {retrieval.sources.length} nearest by cosine similarity
               </div>
               {retrieval.sources.map((s, i) => (
-                <div className="record" key={s.chunk_index}>
+                <div className="record flash-in" key={s.chunk_index}>
                   <div className="record-head">
                     <span className="id">chunk #{s.chunk_index}</span>
                     <span className="score">

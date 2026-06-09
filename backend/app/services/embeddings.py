@@ -13,3 +13,8 @@ def _model() -> SentenceTransformer:
 def embed(texts: list[str]) -> list[list[float]]:
     vectors = _model().encode(texts, normalize_embeddings=True)
     return [v.tolist() for v in vectors]
+
+
+def warm_up() -> None:
+    """Load the model into memory so the first real query isn't a cold start."""
+    _model().encode(["warm up"], normalize_embeddings=True)

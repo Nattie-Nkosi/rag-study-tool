@@ -17,12 +17,14 @@ export default function ChatPane({
   loading,
   onSend,
   onUpload,
+  onShowSources,
 }: {
   doc: UploadResponse | null;
   messages: Message[];
   loading: boolean;
   onSend: (question: string) => void;
   onUpload: (file: File) => void;
+  onShowSources: (message: Message) => void;
 }) {
   const [input, setInput] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -73,9 +75,9 @@ export default function ChatPane({
               <div key={i} className={`bubble ${m.role}`}>
                 {m.content}
                 {m.sources && m.sources.length > 0 && (
-                  <div className="ref">
+                  <button className="ref" onClick={() => onShowSources(m)}>
                     {m.sources.length} chunk{m.sources.length > 1 ? "s" : ""} retrieved →
-                  </div>
+                  </button>
                 )}
               </div>
             ))}

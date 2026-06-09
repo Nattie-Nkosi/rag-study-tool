@@ -12,6 +12,7 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [retrieval, setRetrieval] = useState<RetrievalState>({ status: "idle" });
+  const [flash, setFlash] = useState(0);
 
   useEffect(() => {
     listDocuments()
@@ -42,9 +43,10 @@ export default function Home() {
       const res = await askQuestion(doc.document_id, question);
       setMessages((m) => [
         ...m,
-        { role: "assistant", content: res.answer, sources: res.sources },
+        { role: "assistant", content: res.answer, sources: res.sources, query: question },
       ]);
       setRetrieval({ status: "results", query: question, sources: res.sources });
+      setFlash((f) => f + 1);
     } catch (e) {
       setMessages((m) => [
         ...m,
@@ -56,6 +58,12 @@ export default function Home() {
     }
   }
 
+  function handleShowSources(m: Message) {
+    if (!m.sources || m.sources.length === 0) return;
+    setRetrieval({ status: "results", query: m.query ?? "", sources: m.sources });
+    setFlash((f) => f + 1);
+  }
+
   return (
     <main className="app">
       <ChatPane
@@ -64,8 +72,9 @@ export default function Home() {
         loading={loading}
         onSend={handleSend}
         onUpload={handleUpload}
+        onShowSources={handleShowSources}
       />
-      <InspectorPane doc={doc} retrieval={retrieval} />
+      <InspectorPane doc={doc} retrieval={retrieval} flash={flash} />
     </main>
   );
 }

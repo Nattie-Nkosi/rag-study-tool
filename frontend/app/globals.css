@@ -145,10 +145,20 @@ body {
 }
 
 .bubble.assistant .ref {
+  display: block;
   margin-top: 0.5rem;
+  padding: 0;
   font-size: 0.78rem;
-  color: var(--light-muted);
+  color: var(--accent);
   font-family: var(--mono);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+}
+
+.bubble.assistant .ref:hover {
+  text-decoration: underline;
 }
 
 .thinking {
@@ -344,6 +354,21 @@ body {
   border-radius: 4px;
   padding: 0.7rem 0.8rem;
   background: rgba(255, 255, 255, 0.015);
+}
+
+.record.flash-in {
+  animation: flash-in 0.9s ease-out;
+}
+
+@keyframes flash-in {
+  0% {
+    border-color: var(--yellow);
+    background: rgba(232, 196, 104, 0.16);
+  }
+  100% {
+    border-color: var(--dark-border);
+    background: rgba(255, 255, 255, 0.015);
+  }
 }
 
 .record-head {

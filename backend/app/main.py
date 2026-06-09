@@ -1,10 +1,21 @@
+import threading
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.routers import chat, documents
+from app.services import embeddings
 
-app = FastAPI(title="RAG Study Tool")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    threading.Thread(target=embeddings.warm_up, daemon=True).start()
+    yield
+
+
+app = FastAPI(title="RAG Study Tool", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
