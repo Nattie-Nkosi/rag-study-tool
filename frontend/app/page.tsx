@@ -113,7 +113,6 @@ export default function Home() {
       <section className="chat">
         <header className="chat-header">
           <div className="header-left">
-            <span className="app-title">AI App</span>
             <DocSwitcher
               docs={docs}
               active={doc}
