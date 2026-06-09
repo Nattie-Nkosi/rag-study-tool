@@ -13,7 +13,10 @@ def _client() -> chromadb.ClientAPI:
 
 
 def _collection(document_id: str):
-    return _client().get_or_create_collection(name=f"{_PREFIX}{document_id}")
+    try:
+        return _client().get_collection(name=f"{_PREFIX}{document_id}")
+    except Exception:
+        raise RuntimeError("Document not found. It may have been deleted.")
 
 
 def add_chunks(

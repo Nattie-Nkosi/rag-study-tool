@@ -1,4 +1,9 @@
-import type { ChatResponse, FlashcardResponse, UploadResponse } from "./types";
+import type {
+  ChatResponse,
+  FlashcardResponse,
+  QuizResponse,
+  UploadResponse,
+} from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -30,6 +35,19 @@ export async function generateFlashcards(
   count = 10,
 ): Promise<FlashcardResponse> {
   const res = await fetch(`${API_URL}/flashcards`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ document_id: documentId, count }),
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+export async function generateQuiz(
+  documentId: string,
+  count = 5,
+): Promise<QuizResponse> {
+  const res = await fetch(`${API_URL}/quiz`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ document_id: documentId, count }),

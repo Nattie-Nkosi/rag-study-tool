@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
-from app.routers import chat, documents, flashcards
+from app.routers import chat, documents, flashcards, quiz
 from app.services import embeddings
 
 
@@ -27,6 +27,7 @@ app.add_middleware(
 app.include_router(documents.router)
 app.include_router(chat.router)
 app.include_router(flashcards.router)
+app.include_router(quiz.router)
 
 
 @app.get("/health")

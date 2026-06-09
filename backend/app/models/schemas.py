@@ -35,3 +35,19 @@ class FlashcardRequest(BaseModel):
 
 class FlashcardResponse(BaseModel):
     flashcards: list[Flashcard]
+
+
+class QuizQuestion(BaseModel):
+    question: str
+    options: list[str]
+    answer: int
+    explanation: str
+
+
+class QuizRequest(BaseModel):
+    document_id: str
+    count: int = 5
+
+
+class QuizResponse(BaseModel):
+    questions: list[QuizQuestion]

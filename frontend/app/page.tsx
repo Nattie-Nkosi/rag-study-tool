@@ -6,10 +6,11 @@ import ChatPane from "@/components/ChatPane";
 import DocSwitcher from "@/components/DocSwitcher";
 import FlashcardsPane from "@/components/FlashcardsPane";
 import InspectorPane, { type RetrievalState } from "@/components/InspectorPane";
+import QuizPane from "@/components/QuizPane";
 import { askQuestion, deleteDocument, listDocuments, uploadDocument } from "@/lib/api";
 import type { Message, UploadResponse } from "@/lib/types";
 
-type Mode = "chat" | "study";
+type Mode = "chat" | "study" | "quiz";
 
 export default function Home() {
   const [docs, setDocs] = useState<UploadResponse[]>([]);
@@ -134,10 +135,16 @@ export default function Home() {
             >
               Flashcards
             </button>
+            <button
+              className={mode === "quiz" ? "active" : ""}
+              onClick={() => setMode("quiz")}
+            >
+              Quiz
+            </button>
           </div>
         </header>
 
-        {mode === "chat" ? (
+        {mode === "chat" && (
           <ChatPane
             doc={doc}
             messages={messages}
@@ -146,9 +153,11 @@ export default function Home() {
             onUpload={handleUpload}
             onShowSources={handleShowSources}
           />
-        ) : (
+        )}
+        {mode === "study" && (
           <FlashcardsPane key={doc?.document_id ?? "none"} doc={doc} />
         )}
+        {mode === "quiz" && <QuizPane key={doc?.document_id ?? "none"} doc={doc} />}
       </section>
 
       <InspectorPane doc={doc} retrieval={retrieval} flash={flash} />

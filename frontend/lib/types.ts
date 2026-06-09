@@ -30,3 +30,14 @@ export interface Flashcard {
 export interface FlashcardResponse {
   flashcards: Flashcard[];
 }
+
+export interface QuizQuestion {
+  question: string;
+  options: string[];
+  answer: number;
+  explanation: string;
+}
+
+export interface QuizResponse {
+  questions: QuizQuestion[];
+}
