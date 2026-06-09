@@ -1,0 +1,70 @@
+"use client";
+
+import type { Source, UploadResponse } from "@/lib/types";
+
+export type RetrievalState =
+  | { status: "idle" }
+  | { status: "querying"; query: string }
+  | { status: "results"; query: string; sources: Source[] };
+
+export default function InspectorPane({
+  doc,
+  retrieval,
+}: {
+  doc: UploadResponse | null;
+  retrieval: RetrievalState;
+}) {
+  const records = doc ? doc.chunk_count.toLocaleString() : "0";
+
+  return (
+    <section className="inspector">
+      <header className="inspector-header">
+        <span className="brand">Chroma</span>
+        <span className="meta">
+          <span className="kb">{doc ? "knowledge_base" : "no_collection"}</span>
+          {" · "}
+          {records} records
+        </span>
+      </header>
+
+      <div className="inspector-body">
+        {retrieval.status === "idle" ? (
+          <div className="dashed centered">
+            <span className="await-text">awaiting query input</span>
+          </div>
+        ) : retrieval.status === "querying" ? (
+          <div className="dashed centered">
+            <span className="await-text">querying knowledge_base…</span>
+          </div>
+        ) : (
+          <div className="dashed scrollbar">
+            <div className="records">
+              <div className="records-query">
+                query: <b>{retrieval.query}</b>
+                {"  →  "}
+                {retrieval.sources.length} nearest by cosine similarity
+              </div>
+              {retrieval.sources.map((s, i) => (
+                <div className="record" key={s.chunk_index}>
+                  <div className="record-head">
+                    <span className="id">chunk #{s.chunk_index}</span>
+                    <span className="score">
+                      <span className="score-bar">
+                        <span
+                          className="score-fill"
+                          style={{ width: `${Math.round(s.score * 100)}%` }}
+                        />
+                      </span>
+                      {s.score.toFixed(3)}
+                    </span>
+                  </div>
+                  <div className="record-text">{s.text}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
