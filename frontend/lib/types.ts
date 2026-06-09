@@ -21,3 +21,12 @@ export interface Message {
   sources?: Source[];
   query?: string;
 }
+
+export interface Flashcard {
+  question: string;
+  answer: string;
+}
+
+export interface FlashcardResponse {
+  flashcards: Flashcard[];
+}

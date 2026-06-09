@@ -44,9 +44,7 @@ export default function ChatPane({
   const empty = messages.length === 0;
 
   return (
-    <section className="chat">
-      <header className="chat-header">AI App</header>
-
+    <>
       <div className="chat-body scrollbar" ref={bodyRef}>
         {empty ? (
           <div className="empty-state">
@@ -130,6 +128,6 @@ export default function ChatPane({
           }}
         />
       </div>
-    </section>
+    </>
   );
 }

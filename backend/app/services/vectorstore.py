@@ -43,6 +43,25 @@ def query(document_id: str, query_embedding: list[float], top_k: int):
     return collection.query(query_embeddings=[query_embedding], n_results=top_k)
 
 
+def sample_chunks(document_id: str, n: int) -> list[str]:
+    collection = _collection(document_id)
+    total = collection.count()
+    if total == 0:
+        return []
+    n = min(n, total)
+    step = max(1, total // n)
+    indices = list(range(0, total, step))[:n]
+    ids = [f"{document_id}_{i}" for i in indices]
+    return collection.get(ids=ids).get("documents", []) or []
+
+
+def delete_document(document_id: str) -> None:
+    try:
+        _client().delete_collection(name=f"{_PREFIX}{document_id}")
+    except Exception:
+        pass
+
+
 def list_documents() -> list[dict]:
     docs = []
     for item in _client().list_collections():

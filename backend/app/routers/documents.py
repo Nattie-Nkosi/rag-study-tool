@@ -40,3 +40,11 @@ async def upload_document(file: UploadFile) -> UploadResponse:
 @router.get("", response_model=list[UploadResponse])
 def list_documents() -> list[UploadResponse]:
     return [UploadResponse(**doc) for doc in vectorstore.list_documents()]
+
+
+@router.delete("/{document_id}", status_code=204)
+def delete_document(document_id: str) -> None:
+    vectorstore.delete_document(document_id)
+    path = os.path.join(settings.upload_dir, f"{document_id}.pdf")
+    if os.path.exists(path):
+        os.remove(path)
