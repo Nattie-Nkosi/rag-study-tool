@@ -11,7 +11,9 @@ with cosine-similarity scores — so you can see *why* the model answered the wa
 
 ## Features
 
-- **Chat** — ask questions; answers cite the retrieved chunks.
+- **Chat** — ask questions; answers stream in token by token and cite the retrieved
+  chunks. The conversation is multi-turn: follow-ups ("give me an example of that")
+  are rewritten into standalone queries before retrieval, so context carries over.
 - **Retrieval inspector** — the right panel shows the nearest chunks with cosine
   similarity scores. Click "N chunks retrieved" on any answer to highlight what it used.
 - **Flashcards** — generate a deck of Q&A flip cards sampled across the whole document.
@@ -69,6 +71,7 @@ Next.js frontend  <── answer / cards / quiz (Groq) <── retrieve chunks <
 | `GET`    | `/documents`           | List stored documents (filename + chunk count).    |
 | `DELETE` | `/documents/{id}`      | Delete a document's collection and its PDF.        |
 | `POST`   | `/chat`                | Ask a question; returns an answer + scored sources.|
+| `POST`   | `/chat/stream`         | Same, but streams sources then tokens over SSE.    |
 | `POST`   | `/flashcards`          | Generate flashcards from a document.               |
 | `POST`   | `/quiz`                | Generate a multiple-choice quiz from a document.   |
 | `GET`    | `/health`              | Health check.                                      |

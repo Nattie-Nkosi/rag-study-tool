@@ -27,12 +27,18 @@ export default function ChatPane({
   onShowSources: (message: Message) => void;
 }) {
   const [input, setInput] = useState("");
+  const [dragDepth, setDragDepth] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
 
+  const streamingNow = messages[messages.length - 1]?.streaming === true;
+
   useEffect(() => {
-    bodyRef.current?.scrollTo({ top: bodyRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, loading]);
+    const el = bodyRef.current;
+    if (!el) return;
+    if (streamingNow) el.scrollTop = el.scrollHeight;
+    else el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [messages, loading, streamingNow]);
 
   function submit(text: string) {
     const q = text.trim();
@@ -41,10 +47,26 @@ export default function ChatPane({
     setInput("");
   }
 
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragDepth(0);
+    const f = e.dataTransfer.files?.[0];
+    if (f && f.type === "application/pdf") onUpload(f);
+  }
+
   const empty = messages.length === 0;
 
   return (
-    <>
+    <div
+      className="chat-main"
+      onDragEnter={(e) => {
+        e.preventDefault();
+        setDragDepth((d) => d + 1);
+      }}
+      onDragOver={(e) => e.preventDefault()}
+      onDragLeave={() => setDragDepth((d) => Math.max(0, d - 1))}
+      onDrop={handleDrop}
+    >
       <div className="chat-body scrollbar" ref={bodyRef}>
         {empty ? (
           <div className="empty-state">
@@ -72,14 +94,22 @@ export default function ChatPane({
             {messages.map((m, i) => (
               <div key={i} className={`bubble ${m.role}`}>
                 {m.content}
-                {m.sources && m.sources.length > 0 && (
+                {m.streaming && <span className="caret" />}
+                {!m.streaming && m.sources && m.sources.length > 0 && (
                   <button className="ref" onClick={() => onShowSources(m)}>
                     {m.sources.length} chunk{m.sources.length > 1 ? "s" : ""} retrieved →
                   </button>
                 )}
               </div>
             ))}
-            {loading && <div className="thinking dots">retrieving</div>}
+            {loading && !streamingNow && (
+              <div className="thinking">
+                <span className="tdot" />
+                <span className="tdot" />
+                <span className="tdot" />
+                <span className="label">searching vectors</span>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -128,6 +158,8 @@ export default function ChatPane({
           }}
         />
       </div>
-    </>
+
+      {dragDepth > 0 && <div className="drop-overlay">Drop your PDF to add it</div>}
+    </div>
   );
 }

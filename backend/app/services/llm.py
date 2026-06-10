@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from functools import lru_cache
 
 from groq import Groq
@@ -28,6 +29,19 @@ def complete(system: str, user: str) -> str:
         ],
     )
     return response.choices[0].message.content or ""
+
+
+def stream(system: str, messages: list[dict]) -> Iterator[str]:
+    _require_key()
+    response = _client().chat.completions.create(
+        model=settings.groq_model,
+        messages=[{"role": "system", "content": system}, *messages],
+        stream=True,
+    )
+    for chunk in response:
+        delta = chunk.choices[0].delta.content
+        if delta:
+            yield delta
 
 
 def complete_json(system: str, user: str) -> str:

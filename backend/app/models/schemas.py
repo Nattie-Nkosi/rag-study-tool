@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel
 
 
@@ -7,9 +9,15 @@ class UploadResponse(BaseModel):
     chunk_count: int
 
 
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str
+
+
 class ChatRequest(BaseModel):
     document_id: str
     question: str
+    history: list[ChatMessage] = []
 
 
 class Source(BaseModel):

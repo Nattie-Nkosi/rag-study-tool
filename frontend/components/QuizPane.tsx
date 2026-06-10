@@ -1,9 +1,65 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { generateQuiz } from "@/lib/api";
 import type { QuizQuestion, UploadResponse } from "@/lib/types";
+
+const CONFETTI_COLORS = ["#3b82f6", "#8b5cf6", "#f59e0b", "#10b981", "#ef4444"];
+
+function ScoreRing({ pct }: { pct: number }) {
+  const r = 56;
+  const c = 2 * Math.PI * r;
+  return (
+    <svg width="150" height="150" viewBox="0 0 150 150">
+      <defs>
+        <linearGradient id="scoreGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#3b82f6" />
+          <stop offset="100%" stopColor="#8b5cf6" />
+        </linearGradient>
+      </defs>
+      <circle cx="75" cy="75" r={r} fill="none" stroke="#e4e4e7" strokeWidth="11" />
+      <circle
+        cx="75"
+        cy="75"
+        r={r}
+        fill="none"
+        stroke="url(#scoreGrad)"
+        strokeWidth="11"
+        strokeLinecap="round"
+        strokeDasharray={c}
+        strokeDashoffset={c * (1 - pct / 100)}
+        transform="rotate(-90 75 75)"
+        className="ring-fill"
+        style={{ "--c": c } as React.CSSProperties}
+      />
+      <text x="75" y="79" textAnchor="middle" className="ring-label">
+        {pct}%
+      </text>
+      <text x="75" y="98" textAnchor="middle" className="ring-sub">
+        correct
+      </text>
+    </svg>
+  );
+}
+
+function Confetti() {
+  return (
+    <div className="confetti">
+      {Array.from({ length: 30 }).map((_, i) => (
+        <span
+          key={i}
+          style={{
+            left: `${(i * 37 + 11) % 100}%`,
+            background: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+            animationDelay: `${(i % 12) * 0.1}s`,
+            animationDuration: `${2.1 + (i % 5) * 0.3}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
 
 export default function QuizPane({ doc }: { doc: UploadResponse | null }) {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -35,6 +91,27 @@ export default function QuizPane({ doc }: { doc: UploadResponse | null }) {
     setAnswers((a) => a.map((v, i) => (i === index ? option : v)));
   }
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (loading || finished || questions.length === 0) return;
+      const q = questions[index];
+      const chosen = answers[index];
+      const byLetter = "abcd".indexOf(e.key.toLowerCase());
+      const byNumber = "1234".indexOf(e.key);
+      const pick = byLetter >= 0 ? byLetter : byNumber;
+      if (chosen == null && pick >= 0 && pick < q.options.length) {
+        setAnswers((a) => a.map((v, i) => (i === index ? pick : v)));
+      } else if ((e.key === "ArrowRight" || e.key === "Enter") && chosen != null) {
+        if (index === questions.length - 1) setFinished(true);
+        else setIndex((i) => i + 1);
+      } else if (e.key === "ArrowLeft" && index > 0) {
+        setIndex((i) => i - 1);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [questions, answers, index, finished, loading]);
+
   if (!doc) {
     return (
       <div className="chat-body">
@@ -63,13 +140,23 @@ export default function QuizPane({ doc }: { doc: UploadResponse | null }) {
 
   if (finished) {
     const pct = Math.round((score / questions.length) * 100);
+    const msg =
+      pct === 100
+        ? "Perfect score!"
+        : pct >= 80
+          ? "Excellent work!"
+          : pct >= 60
+            ? "Nice — solid grasp."
+            : "Keep studying — run it back!";
     return (
       <div className="chat-body">
         <div className="quiz-result">
-          <div className="result-score">
-            {score} / {questions.length}
+          {pct >= 60 && <Confetti />}
+          <ScoreRing pct={pct} />
+          <div className="result-msg">{msg}</div>
+          <div className="result-pct">
+            {score} of {questions.length} questions
           </div>
-          <div className="result-pct">{pct}% correct</div>
           <div className="result-actions">
             <button
               className="nav-btn"
@@ -102,6 +189,15 @@ export default function QuizPane({ doc }: { doc: UploadResponse | null }) {
             Question {index + 1} / {questions.length}
           </span>
           <span>Score {score}</span>
+        </div>
+
+        <div className="quiz-track">
+          <div
+            className="quiz-track-fill"
+            style={{
+              width: `${((index + (answered ? 1 : 0)) / questions.length) * 100}%`,
+            }}
+          />
         </div>
 
         <p className="quiz-question">{q.question}</p>
@@ -159,6 +255,10 @@ export default function QuizPane({ doc }: { doc: UploadResponse | null }) {
               Next →
             </button>
           )}
+        </div>
+
+        <div className="kbd-hint">
+          <kbd>A</kbd>–<kbd>D</kbd> answer · <kbd>↵</kbd> next
         </div>
       </div>
     </div>

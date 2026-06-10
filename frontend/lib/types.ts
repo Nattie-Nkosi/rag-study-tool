@@ -15,11 +15,17 @@ export interface ChatResponse {
   sources: Source[];
 }
 
+export interface HistoryMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
 export interface Message {
   role: "user" | "assistant";
   content: string;
   sources?: Source[];
   query?: string;
+  streaming?: boolean;
 }
 
 export interface Flashcard {

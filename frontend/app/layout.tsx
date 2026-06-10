@@ -9,7 +9,13 @@ export const metadata: Metadata = {
 function BrandMark() {
   return (
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-      <rect x="2" y="2" width="20" height="20" rx="6" fill="#3b82f6" />
+      <defs>
+        <linearGradient id="brandGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#3b82f6" />
+          <stop offset="100%" stopColor="#8b5cf6" />
+        </linearGradient>
+      </defs>
+      <rect x="2" y="2" width="20" height="20" rx="6" fill="url(#brandGrad)" />
       <path d="M7 8.5h10M7 12h10M7 15.5h6" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );

@@ -1,7 +1,9 @@
 import type {
   ChatResponse,
   FlashcardResponse,
+  HistoryMessage,
   QuizResponse,
+  Source,
   UploadResponse,
 } from "./types";
 
@@ -59,12 +61,63 @@ export async function generateQuiz(
 export async function askQuestion(
   documentId: string,
   question: string,
+  history: HistoryMessage[] = [],
 ): Promise<ChatResponse> {
   const res = await fetch(`${API_URL}/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ document_id: documentId, question }),
+    body: JSON.stringify({ document_id: documentId, question, history }),
   });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
+}
+
+type StreamEvent =
+  | { type: "sources"; query: string; sources: Source[] }
+  | { type: "token"; token: string }
+  | { type: "done" }
+  | { type: "error"; message: string };
+
+export async function streamQuestion(
+  documentId: string,
+  question: string,
+  history: HistoryMessage[],
+  handlers: {
+    onSources: (query: string, sources: Source[]) => void;
+    onToken: (token: string) => void;
+  },
+): Promise<void> {
+  const res = await fetch(`${API_URL}/chat/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ document_id: documentId, question, history }),
+  });
+  if (!res.ok || !res.body) throw new Error(await res.text());
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    let sep;
+    while ((sep = buffer.indexOf("\n\n")) >= 0) {
+      const frame = buffer.slice(0, sep);
+      buffer = buffer.slice(sep + 2);
+      const data = frame
+        .split("\n")
+        .filter((l) => l.startsWith("data: "))
+        .map((l) => l.slice(6))
+        .join("");
+      if (!data) continue;
+      const event = JSON.parse(data) as StreamEvent;
+      if (event.type === "sources") handlers.onSources(event.query, event.sources);
+      else if (event.type === "token") handlers.onToken(event.token);
+      else if (event.type === "error") throw new Error(event.message);
+      else if (event.type === "done") return;
+    }
+  }
 }

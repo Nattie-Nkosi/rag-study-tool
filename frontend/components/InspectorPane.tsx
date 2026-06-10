@@ -32,11 +32,22 @@ export default function InspectorPane({
       <div className="inspector-body">
         {retrieval.status === "idle" ? (
           <div className="dashed centered">
-            <span className="await-text">awaiting query input</span>
+            <span className="await-text">
+              awaiting query input
+              <span className="blink" />
+            </span>
           </div>
         ) : retrieval.status === "querying" ? (
           <div className="dashed centered">
-            <span className="await-text">querying knowledge_base…</span>
+            <div className="scan">
+              <span className="await-text">
+                querying knowledge_base
+                <span className="blink" />
+              </span>
+              <span className="scan-row" />
+              <span className="scan-row" />
+              <span className="scan-row" />
+            </div>
           </div>
         ) : (
           <div className="dashed scrollbar">
@@ -47,14 +58,21 @@ export default function InspectorPane({
                 {retrieval.sources.length} nearest by cosine similarity
               </div>
               {retrieval.sources.map((s, i) => (
-                <div className="record flash-in" key={s.chunk_index}>
+                <div
+                  className="record flash-in"
+                  key={s.chunk_index}
+                  style={{ animationDelay: `${i * 0.11}s` }}
+                >
                   <div className="record-head">
                     <span className="id">chunk #{s.chunk_index}</span>
                     <span className="score">
                       <span className="score-bar">
                         <span
                           className="score-fill"
-                          style={{ width: `${Math.round(s.score * 100)}%` }}
+                          style={{
+                            width: `${Math.round(s.score * 100)}%`,
+                            animationDelay: `${0.3 + i * 0.11}s`,
+                          }}
                         />
                       </span>
                       {s.score.toFixed(3)}

@@ -7,7 +7,7 @@ import DocSwitcher from "@/components/DocSwitcher";
 import FlashcardsPane from "@/components/FlashcardsPane";
 import InspectorPane, { type RetrievalState } from "@/components/InspectorPane";
 import QuizPane from "@/components/QuizPane";
-import { askQuestion, deleteDocument, listDocuments, uploadDocument } from "@/lib/api";
+import { deleteDocument, listDocuments, streamQuestion, uploadDocument } from "@/lib/api";
 import type { Message, UploadResponse } from "@/lib/types";
 
 type Mode = "chat" | "study" | "quiz";
@@ -80,23 +80,51 @@ export default function Home() {
 
   async function handleSend(question: string) {
     if (!doc) return;
+    const history = messages
+      .filter((m) => m.content)
+      .slice(-8)
+      .map(({ role, content }) => ({ role, content }));
     setMessages((m) => [...m, { role: "user", content: question }]);
     setLoading(true);
     setRetrieval({ status: "querying", query: question });
+    let gotSources = false;
     try {
-      const res = await askQuestion(doc.document_id, question);
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", content: res.answer, sources: res.sources, query: question },
-      ]);
-      setRetrieval({ status: "results", query: question, sources: res.sources });
-      setFlash((f) => f + 1);
+      await streamQuestion(doc.document_id, question, history, {
+        onSources: (query, sources) => {
+          gotSources = true;
+          setRetrieval({ status: "results", query, sources });
+          setFlash((f) => f + 1);
+          setMessages((m) => [
+            ...m,
+            { role: "assistant", content: "", sources, query, streaming: true },
+          ]);
+        },
+        onToken: (token) => {
+          setMessages((m) => {
+            const last = m[m.length - 1];
+            if (!last || last.role !== "assistant" || !last.streaming) return m;
+            return [...m.slice(0, -1), { ...last, content: last.content + token }];
+          });
+        },
+      });
+      setMessages((m) => {
+        const last = m[m.length - 1];
+        if (!last?.streaming) return m;
+        return [...m.slice(0, -1), { ...last, streaming: false }];
+      });
     } catch (e) {
-      setMessages((m) => [
-        ...m,
-        { role: "assistant", content: e instanceof Error ? e.message : "Request failed" },
-      ]);
-      setRetrieval({ status: "idle" });
+      const msg = e instanceof Error ? e.message : "Request failed";
+      setMessages((m) => {
+        const last = m[m.length - 1];
+        if (last?.role === "assistant" && last.streaming) {
+          return [
+            ...m.slice(0, -1),
+            { ...last, streaming: false, content: last.content || msg },
+          ];
+        }
+        return [...m, { role: "assistant", content: msg }];
+      });
+      if (!gotSources) setRetrieval({ status: "idle" });
     } finally {
       setLoading(false);
     }

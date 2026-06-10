@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { generateFlashcards } from "@/lib/api";
 import type { Flashcard, UploadResponse } from "@/lib/types";
@@ -32,6 +32,23 @@ export default function FlashcardsPane({ doc }: { doc: UploadResponse | null }) 
     setFlipped(false);
     setIndex((i) => Math.min(Math.max(i + delta, 0), cards.length - 1));
   }
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (cards.length === 0) return;
+      if (e.key === "ArrowRight") {
+        go(1);
+      } else if (e.key === "ArrowLeft") {
+        go(-1);
+      } else if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        setFlipped((f) => !f);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards.length]);
 
   if (!doc) {
     return (
@@ -79,6 +96,20 @@ export default function FlashcardsPane({ doc }: { doc: UploadResponse | null }) 
           </div>
         </div>
 
+        <div className="deck-dots">
+          {cards.map((_, i) => (
+            <button
+              key={i}
+              className={`deck-dot ${i === index ? "on" : ""}`}
+              aria-label={`Card ${i + 1}`}
+              onClick={() => {
+                setFlipped(false);
+                setIndex(i);
+              }}
+            />
+          ))}
+        </div>
+
         <div className="deck-controls">
           <button className="nav-btn" onClick={() => go(-1)} disabled={index === 0}>
             ← Prev
@@ -93,6 +124,10 @@ export default function FlashcardsPane({ doc }: { doc: UploadResponse | null }) 
           >
             Next →
           </button>
+        </div>
+
+        <div className="kbd-hint">
+          <kbd>←</kbd> <kbd>→</kbd> navigate · <kbd>space</kbd> flips
         </div>
 
         <button className="ghost-btn" onClick={generate} disabled={loading}>
